@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Código Online</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .editor-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            flex: 1;
+        }
+        .editor-box {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        .editor-header {
+            background-color: #333;
+            color: white;
+            padding: 8px;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+        }
+        .editor {
+            flex: 1;
+            border: 1px solid #ccc;
+            border-radius: 0 0 5px 5px;
+            background-color: #f8f8f8;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 10px;
+            resize: none;
+        }
+        .preview-container {
+            margin-top: 10px;
+            flex-basis: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333;
+            color: white;
+            padding: 8px;
+            border-radius: 5px 5px 0 0;
+        }
+        #run-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #run-btn:hover {
+            background-color: #45a049;
+        }
+        #preview {
+            flex: 1;
+            border: 1px solid #ccc;
+            border-radius: 0 0 5px 5px;
+            background-color: white;
+            padding: 10px;
+            overflow: auto;
+        }
+        .clear-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .clear-btn:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="editor-container">
+            <div class="editor-box">
+                <div class="editor-header">HTML</div>
+                <textarea id="html-code" class="editor" placeholder="Escribe tu código HTML aquí">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Mi Página&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Hola Mundo!&lt;/h1&gt;
+    &lt;p&gt;Este es un editor de código online.&lt;/p&gt;
+    &lt;button id="demo-btn"&gt;Haz clic&lt;/button&gt;
+&lt;/body&gt;
+&lt;/html&gt;</textarea>
+            </div>
+            <div class="editor-box">
+                <div class="editor-header">CSS</div>
+                <textarea id="css-code" class="editor" placeholder="Escribe tu código CSS aquí">body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+}
+h1 {
+    color: #4CAF50;
+}
+#demo-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+#demo-btn:hover {
+    background-color: #45a049;
+}</textarea>
+            </div>
+            <div class="editor-box">
+                <div class="editor-header">JavaScript</div>
+                <textarea id="js-code" class="editor" placeholder="Escribe tu código JavaScript aquí">document.getElementById('demo-btn').addEventListener('click', function() {
+    alert('¡Botón clickeado!');
+});</textarea>
+            </div>
+        </div>
+        <div class="preview-container">
+            <div class="preview-header">
+                <span>Resultado</span>
+                <div>
+                    <button id="run-btn">Ejecutar Código</button>
+                    <button class="clear-btn" id="clear-btn">Limpiar</button>
+                </div>
+            </div>
+            <iframe id="preview"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // Elementos del DOM
+        const htmlCode = document.getElementById('html-code');
+        const cssCode = document.getElementById('css-code');
+        const jsCode = document.getElementById('js-code');
+        const preview = document.getElementById('preview');
+        const runBtn = document.getElementById('run-btn');
+        const clearBtn = document.getElementById('clear-btn');
+
+        // Cargar código guardado
+        function loadCode() {
+            if(localStorage.getItem('html')) {
+                htmlCode.value = localStorage.getItem('html');
+            }
+            if(localStorage.getItem('css')) {
+                cssCode.value = localStorage.getItem('css');
+            }
+            if(localStorage.getItem('js')) {
+                jsCode.value = localStorage.getItem('js');
+            }
+            runCode();
+        }
+
+        // Ejecutar el código
+        function runCode() {
+            // Guardar en localStorage
+            localStorage.setItem('html', htmlCode.value);
+            localStorage.setItem('css', cssCode.value);
+            localStorage.setItem('js', jsCode.value);
+
+            // Crear documento para el iframe
+            const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>${cssCode.value}</style>
+                </head>
+                <body>
+                    ${htmlCode.value}
+                    <script>${jsCode.value}<\/script>
+                </body>
+                </html>
+            `;
+
+            // Mostrar resultado en el iframe
+            preview.srcdoc = html;
+        }
+
+        // Limpiar editores
+        function clearCode() {
+            if(confirm('¿Estás seguro de que quieres limpiar todo el código?')) {
+                htmlCode.value = '';
+                cssCode.value = '';
+                jsCode.value = '';
+                localStorage.removeItem('html');
+                localStorage.removeItem('css');
+                localStorage.removeItem('js');
+                runCode();
+            }
+        }
+
+        // Event listeners
+        runBtn.addEventListener('click', runCode);
+        clearBtn.addEventListener('click', clearCode);
+
+        // Auto-ejecutar al cargar la página
+        window.addEventListener('load', loadCode);
+
+        // Opcional: Auto-ejecutar al dejar de escribir (debounce)
+        let timeout;
+        [htmlCode, cssCode, jsCode].forEach(editor => {
+            editor.addEventListener('input', () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(runCode, 1000);
+            });
+        });
+    </script>
+</body>
+</html>
