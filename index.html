@@ -3,233 +3,976 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor de Código Online</title>
+    <title>Editor de Código Avanzado</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3d3d3d;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --accent: #007acc;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --border: #404040;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        * {
             margin: 0;
             padding: 0;
-            background-color: #f5f5f5;
+            box-sizing: border-box;
         }
-        .container {
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app {
             display: flex;
             flex-direction: column;
             height: 100vh;
-            padding: 10px;
-            box-sizing: border-box;
         }
-        .editor-container {
+
+        .toolbar {
+            background: var(--bg-secondary);
+            padding: 12px 20px;
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            flex: 1;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 10px var(--shadow);
         }
-        .editor-box {
-            flex: 1;
-            min-width: 300px;
+
+        .toolbar h1 {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .toolbar-controls {
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            gap: 15px;
         }
-        .editor-header {
-            background-color: #333;
+
+        .btn {
+            background: var(--accent);
             color: white;
-            padding: 8px;
-            border-radius: 5px 5px 0 0;
-            font-weight: bold;
-        }
-        .editor {
-            flex: 1;
-            border: 1px solid #ccc;
-            border-radius: 0 0 5px 5px;
-            background-color: #f8f8f8;
-            font-family: 'Courier New', monospace;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
             font-size: 14px;
-            padding: 10px;
-            resize: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .preview-container {
-            margin-top: 10px;
-            flex-basis: 100%;
+
+        .btn:hover {
+            background: #005a9e;
+            transform: translateY(-1px);
+        }
+
+        .btn.success {
+            background: var(--success);
+        }
+
+        .btn.success:hover {
+            background: #45a049;
+        }
+
+        .btn.warning {
+            background: var(--warning);
+        }
+
+        .btn.warning:hover {
+            background: #e68900;
+        }
+
+        .btn.error {
+            background: var(--error);
+        }
+
+        .btn.error:hover {
+            background: #d32f2f;
+        }
+
+        .theme-selector {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .editors-panel {
+            flex: 1;
             display: flex;
             flex-direction: column;
+            border-right: 1px solid var(--border);
+            min-width: 200px;
         }
+
+        .editor-tabs {
+            display: flex;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .editor-tab {
+            flex: 1;
+            padding: 12px 20px;
+            background: var(--bg-tertiary);
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .editor-tab.active {
+            background: var(--bg-primary);
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .editor-tab:hover:not(.active) {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .editor-content {
+            flex: 1;
+            display: none;
+            position: relative;
+        }
+
+        .editor-content.active {
+            display: block;
+        }
+
+        .CodeMirror {
+            height: 100% !important;
+            font-family: 'Fira Code', 'Consolas', monospace !important;
+            font-size: 14px !important;
+            line-height: 1.5 !important;
+        }
+
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary);
+            min-width: 200px;
+        }
+
         .preview-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            background-color: #333;
-            color: white;
-            padding: 8px;
-            border-radius: 5px 5px 0 0;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
         }
-        #run-btn {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
+
+        .preview-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        #run-btn:hover {
-            background-color: #45a049;
+
+        .preview-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        #preview {
+
+        .preview-iframe {
             flex: 1;
-            border: 1px solid #ccc;
-            border-radius: 0 0 5px 5px;
-            background-color: white;
-            padding: 10px;
-            overflow: auto;
-        }
-        .clear-btn {
-            background-color: #f44336;
-            color: white;
             border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-left: 10px;
+            background: white;
+            border-radius: 0;
         }
-        .clear-btn:hover {
-            background-color: #d32f2f;
+
+        .status-bar {
+            background: var(--bg-secondary);
+            padding: 8px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .resizer {
+            width: 4px;
+            background: var(--border);
+            cursor: col-resize;
+            transition: background 0.3s ease;
+        }
+
+        .resizer:hover {
+            background: var(--accent);
+        }
+
+        .fullscreen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-primary);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .fullscreen-overlay.active {
+            display: flex;
+        }
+
+        .fullscreen-header {
+            background: var(--bg-secondary);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .error-console {
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border);
+            padding: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--error);
+            display: none;
+        }
+
+        .error-console.show {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-top: 2px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .editors-panel {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+            
+            .toolbar-controls {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="editor-container">
-            <div class="editor-box">
-                <div class="editor-header">HTML</div>
-                <textarea id="html-code" class="editor" placeholder="Escribe tu código HTML aquí">&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;title&gt;Mi Página&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;h1&gt;Hola Mundo!&lt;/h1&gt;
-    &lt;p&gt;Este es un editor de código online.&lt;/p&gt;
-    &lt;button id="demo-btn"&gt;Haz clic&lt;/button&gt;
-&lt;/body&gt;
-&lt;/html&gt;</textarea>
-            </div>
-            <div class="editor-box">
-                <div class="editor-header">CSS</div>
-                <textarea id="css-code" class="editor" placeholder="Escribe tu código CSS aquí">body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 20px;
-}
-h1 {
-    color: #4CAF50;
-}
-#demo-btn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-#demo-btn:hover {
-    background-color: #45a049;
-}</textarea>
-            </div>
-            <div class="editor-box">
-                <div class="editor-header">JavaScript</div>
-                <textarea id="js-code" class="editor" placeholder="Escribe tu código JavaScript aquí">document.getElementById('demo-btn').addEventListener('click', function() {
-    alert('¡Botón clickeado!');
-});</textarea>
+    <div class="app">
+        <div class="toolbar">
+            <h1><i class="fas fa-code"></i> Editor de Código Avanzado</h1>
+            <div class="toolbar-controls">
+                <select class="theme-selector" id="theme-selector">
+                    <option value="material">Tema Oscuro</option>
+                    <option value="default">Tema Claro</option>
+                    <option value="monokai">Monokai</option>
+                </select>
+                <button class="btn success tooltip" id="run-btn" data-tooltip="Ejecutar (Ctrl+Enter)">
+                    <i class="fas fa-play"></i> Ejecutar
+                </button>
+                <button class="btn tooltip" id="export-btn" data-tooltip="Exportar HTML">
+                    <i class="fas fa-download"></i> Exportar
+                </button>
+                <button class="btn error tooltip" id="clear-btn" data-tooltip="Limpiar Todo">
+                    <i class="fas fa-trash"></i> Limpiar
+                </button>
             </div>
         </div>
-        <div class="preview-container">
-            <div class="preview-header">
-                <span>Resultado</span>
-                <div>
-                    <button id="run-btn">Ejecutar Código</button>
-                    <button class="clear-btn" id="clear-btn">Limpiar</button>
+
+        <div class="main-content">
+            <div class="editors-panel">
+                <div class="editor-tabs">
+                    <button class="editor-tab active" data-lang="html">
+                        <i class="fab fa-html5"></i> HTML
+                    </button>
+                    <button class="editor-tab" data-lang="css">
+                        <i class="fab fa-css3-alt"></i> CSS
+                    </button>
+                    <button class="editor-tab" data-lang="javascript">
+                        <i class="fab fa-js"></i> JavaScript
+                    </button>
                 </div>
+                <div class="editor-content active" id="html-editor"></div>
+                <div class="editor-content" id="css-editor"></div>
+                <div class="editor-content" id="js-editor"></div>
             </div>
-            <iframe id="preview"></iframe>
+
+            <div class="resizer" id="resizer"></div>
+
+            <div class="preview-panel">
+                <div class="preview-header">
+                    <div class="preview-title">
+                        <i class="fas fa-eye"></i> Vista Previa
+                    </div>
+                    <div class="preview-controls">
+                        <div class="loading" id="loading">
+                            <div class="spinner"></div>
+                            <span>Cargando...</span>
+                        </div>
+                        <button class="btn tooltip" id="fullscreen-btn" data-tooltip="Pantalla Completa">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button class="btn tooltip" id="refresh-btn" data-tooltip="Refrescar">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <iframe id="preview" class="preview-iframe"></iframe>
+                <div class="error-console" id="error-console"></div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-info">
+                <span id="current-tab">HTML</span>
+                <span id="auto-save-status">Guardado automático: Activo</span>
+            </div>
+            <div class="status-info">
+                <span id="last-saved">Última actualización: Nunca</span>
+            </div>
         </div>
     </div>
 
+    <div class="fullscreen-overlay" id="fullscreen-overlay">
+        <div class="fullscreen-header">
+            <div class="preview-title">
+                <i class="fas fa-eye"></i> Vista Previa - Pantalla Completa
+            </div>
+            <button class="btn" id="exit-fullscreen">
+                <i class="fas fa-times"></i> Salir
+            </button>
+        </div>
+        <iframe id="fullscreen-preview" class="preview-iframe"></iframe>
+    </div>
+
+    <!-- Scripts de CodeMirror -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/html-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/css-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/javascript-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchtags.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/xml-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/brace-fold.min.js"></script>
+
     <script>
-        // Elementos del DOM
-        const htmlCode = document.getElementById('html-code');
-        const cssCode = document.getElementById('css-code');
-        const jsCode = document.getElementById('js-code');
-        const preview = document.getElementById('preview');
-        const runBtn = document.getElementById('run-btn');
-        const clearBtn = document.getElementById('clear-btn');
+        class CodeEditor {
+            constructor() {
+                this.editors = {};
+                this.currentTab = 'html';
+                this.autoSaveTimeout = null;
+                this.isResizing = false;
+                this.init();
+            }
 
-        // Cargar código guardado
-        function loadCode() {
-            if(localStorage.getItem('html')) {
-                htmlCode.value = localStorage.getItem('html');
+            init() {
+                this.setupEditors();
+                this.setupEventListeners();
+                this.loadSavedCode();
+                this.updatePreview();
+                this.setupResizer();
+                this.setupKeyboardShortcuts();
             }
-            if(localStorage.getItem('css')) {
-                cssCode.value = localStorage.getItem('css');
+
+            setupEditors() {
+                const editorConfigs = {
+                    html: {
+                        mode: 'htmlmixed',
+                        element: document.getElementById('html-editor'),
+                        defaultValue: `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Página Web</title>
+</head>
+<body>
+    <div class="container">
+        <h1>¡Hola Mundo!</h1>
+        <p>Bienvenido al editor de código avanzado</p>
+        <button id="demo-btn" class="btn-primary">Haz clic aquí</button>
+        <div id="counter">Clicks: 0</div>
+    </div>
+</body>
+</html>`
+                    },
+                    css: {
+                        mode: 'css',
+                        element: document.getElementById('css-editor'),
+                        defaultValue: `* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+}
+
+.container {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+}
+
+h1 {
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 2.5em;
+    font-weight: 700;
+}
+
+p {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 1.2em;
+    line-height: 1.6;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+#counter {
+    font-size: 1.5em;
+    color: #667eea;
+    font-weight: 600;
+    margin-top: 20px;
+}`
+                    },
+                    javascript: {
+                        mode: 'javascript',
+                        element: document.getElementById('js-editor'),
+                        defaultValue: `let clickCount = 0;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const button = document.getElementById('demo-btn');
+    const counter = document.getElementById('counter');
+    
+    button.addEventListener('click', function() {
+        clickCount++;
+        counter.textContent = \`Clicks: \${clickCount}\`;
+        
+        // Animación del botón
+        button.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            button.style.transform = 'scale(1)';
+        }, 150);
+        
+        // Cambiar color del contador
+        counter.style.color = \`hsl(\${clickCount * 30}, 70%, 50%)\`;
+        
+        // Mensaje especial cada 10 clicks
+        if (clickCount % 10 === 0) {
+            alert(\`¡Increíble! Has hecho \${clickCount} clicks\`);
+        }
+    });
+    
+    // Mensaje de bienvenida
+    console.log('¡Editor de código cargado exitosamente!');
+});`
+                    }
+                };
+
+                Object.keys(editorConfigs).forEach(lang => {
+                    const config = editorConfigs[lang];
+                    this.editors[lang] = CodeMirror(config.element, {
+                        mode: config.mode,
+                        theme: 'material',
+                        lineNumbers: true,
+                        autoCloseBrackets: true,
+                        autoCloseTags: true,
+                        matchTags: true,
+                        indentWithTabs: false,
+                        indentUnit: 2,
+                        tabSize: 2,
+                        lineWrapping: true,
+                        foldGutter: true,
+                        gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+                        extraKeys: {
+                            'Ctrl-Space': 'autocomplete',
+                            'Ctrl-Enter': () => this.updatePreview()
+                        },
+                        value: config.defaultValue
+                    });
+
+                    this.editors[lang].on('change', () => {
+                        this.scheduleAutoSave();
+                    });
+                });
             }
-            if(localStorage.getItem('js')) {
-                jsCode.value = localStorage.getItem('js');
+
+            setupEventListeners() {
+                // Tabs
+                document.querySelectorAll('.editor-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const lang = tab.dataset.lang;
+                        this.switchTab(lang);
+                    });
+                });
+
+                // Botones
+                document.getElementById('run-btn').addEventListener('click', () => {
+                    this.updatePreview();
+                });
+
+                document.getElementById('clear-btn').addEventListener('click', () => {
+                    this.clearCode();
+                });
+
+                document.getElementById('export-btn').addEventListener('click', () => {
+                    this.exportCode();
+                });
+
+                document.getElementById('fullscreen-btn').addEventListener('click', () => {
+                    this.toggleFullscreen();
+                });
+
+                document.getElementById('exit-fullscreen').addEventListener('click', () => {
+                    this.toggleFullscreen();
+                });
+
+                document.getElementById('refresh-btn').addEventListener('click', () => {
+                    this.updatePreview();
+                });
+
+                // Selector de tema
+                document.getElementById('theme-selector').addEventListener('change', (e) => {
+                    this.changeTheme(e.target.value);
+                });
+
+                // Fullscreen con Escape
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && document.getElementById('fullscreen-overlay').classList.contains('active')) {
+                        this.toggleFullscreen();
+                    }
+                });
             }
-            runCode();
+
+            switchTab(lang) {
+                // Actualizar tabs
+                document.querySelectorAll('.editor-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-lang="${lang}"]`).classList.add('active');
+
+                // Actualizar contenido
+                document.querySelectorAll('.editor-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${lang}-editor`).classList.add('active');
+
+                this.currentTab = lang;
+                document.getElementById('current-tab').textContent = lang.toUpperCase();
+                
+                // Refresh editor
+                setTimeout(() => {
+                    this.editors[lang].refresh();
+                }, 100);
+            }
+
+            scheduleAutoSave() {
+                clearTimeout(this.autoSaveTimeout);
+                this.autoSaveTimeout = setTimeout(() => {
+                    this.saveCode();
+                }, 1000);
+            }
+
+            saveCode() {
+                const code = {};
+                Object.keys(this.editors).forEach(lang => {
+                    code[lang] = this.editors[lang].getValue();
+                });
+
+                localStorage.setItem('editorCode', JSON.stringify(code));
+                
+                const now = new Date();
+                document.getElementById('last-saved').textContent = 
+                    `Última actualización: ${now.toLocaleTimeString()}`;
+            }
+
+            loadSavedCode() {
+                const savedCode = localStorage.getItem('editorCode');
+                if (savedCode) {
+                    try {
+                        const code = JSON.parse(savedCode);
+                        Object.keys(code).forEach(lang => {
+                            if (this.editors[lang]) {
+                                this.editors[lang].setValue(code[lang]);
+                            }
+                        });
+                    } catch (e) {
+                        console.error('Error al cargar código guardado:', e);
+                    }
+                }
+            }
+
+            updatePreview() {
+                this.showLoading();
+                
+                setTimeout(() => {
+                    const html = this.editors.html.getValue();
+                    const css = this.editors.css.getValue();
+                    const js = this.editors.javascript.getValue();
+
+                    const fullCode = `
+                        <!DOCTYPE html>
+                        <html lang="es">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Vista Previa</title>
+                            <style>${css}</style>
+                        </head>
+                        <body>
+                            ${html}
+                            <script>
+                                try {
+                                    ${js}
+                                } catch (error) {
+                                    console.error('Error en JavaScript:', error);
+                                    parent.postMessage({type: 'error', message: error.message}, '*');
+                                }
+                            <\/script>
+                        </body>
+                        </html>
+                    `;
+
+                    document.getElementById('preview').srcdoc = fullCode;
+                    document.getElementById('fullscreen-preview').srcdoc = fullCode;
+                    
+                    this.hideLoading();
+                }, 500);
+            }
+
+            showLoading() {
+                document.getElementById('loading').classList.add('show');
+            }
+
+            hideLoading() {
+                document.getElementById('loading').classList.remove('show');
+            }
+
+            clearCode() {
+                if (confirm('¿Estás seguro de que quieres limpiar todo el código?')) {
+                    Object.keys(this.editors).forEach(lang => {
+                        this.editors[lang].setValue('');
+                    });
+                    localStorage.removeItem('editorCode');
+                    this.updatePreview();
+                }
+            }
+
+            exportCode() {
+                const html = this.editors.html.getValue();
+                const css = this.editors.css.getValue();
+                const js = this.editors.javascript.getValue();
+
+                const fullCode = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Página Web</title>
+    <style>
+${css}
+    </style>
+</head>
+<body>
+${html}
+    <script>
+${js}
+    <\/script>
+</body>
+</html>`;
+
+                const blob = new Blob([fullCode], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'mi-pagina-web.html';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            toggleFullscreen() {
+                const overlay = document.getElementById('fullscreen-overlay');
+                overlay.classList.toggle('active');
+                
+                if (overlay.classList.contains('active')) {
+                    document.getElementById('fullscreen-preview').srcdoc = 
+                        document.getElementById('preview').srcdoc;
+                }
+            }
+
+            changeTheme(theme) {
+                Object.keys(this.editors).forEach(lang => {
+                    this.editors[lang].setOption('theme', theme);
+                });
+            }
+
+            setupResizer() {
+                const resizer = document.getElementById('resizer');
+                const editorsPanel = document.querySelector('.editors-panel');
+                const previewPanel = document.querySelector('.preview-panel');
+
+                resizer.addEventListener('mousedown', (e) => {
+                    this.isResizing = true;
+                    document.addEventListener('mousemove', this.handleResize);
+                    document.addEventListener('mouseup', this.stopResize);
+                });
+            }
+
+            handleResize = (e) => {
+                if (!this.isResizing) return;
+                
+                const container = document.querySelector('.main-content');
+                const containerRect = container.getBoundingClientRect();
+                const percentage = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+                
+                if (percentage > 20 && percentage < 80) {
+                    document.querySelector('.editors-panel').style.flex = `0 0 ${percentage}%`;
+                    document.querySelector('.preview-panel').style.flex = `0 0 ${100 - percentage}%`;
+                }
+            }
+
+            stopResize = () => {
+                this.isResizing = false;
+                document.removeEventListener('mousemove', this.handleResize);
+                document.removeEventListener('mouseup', this.stopResize);
+                
+                // Refresh editors after resize
+                setTimeout(() => {
+                    Object.keys(this.editors).forEach(lang => {
+                        this.editors[lang].refresh();
+                    });
+                }, 100);
+            }
+
+            setupKeyboardShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    // Ctrl+S para guardar
+                    if (e.ctrlKey && e.key === 's') {
+                        e.preventDefault();
+                        this.saveCode();
+                    }
+                    
+                    // Ctrl+Enter para ejecutar
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        e.preventDefault();
+                        this.updatePreview();
+                    }
+                    
+                    // Ctrl+1, Ctrl+2, Ctrl+3 para cambiar tabs
+                    if (e.ctrlKey && ['1', '2', '3'].includes(e.key)) {
+                        e.preventDefault();
+                        const tabs = ['html', 'css', 'javascript'];
+                        this.switchTab(tabs[parseInt(e.key) - 1]);
+                    }
+                    
+                    // F11 para fullscreen
+                    if (e.key === 'F11') {
+                        e.preventDefault();
+                        this.toggleFullscreen();
+                    }
+                });
+            }
+
+            showErrorConsole(message) {
+                const errorConsole = document.getElementById('error-console');
+                errorConsole.textContent = `Error: ${message}`;
+                errorConsole.classList.add('show');
+                
+                setTimeout(() => {
+                    errorConsole.classList.remove('show');
+                }, 5000);
+            }
         }
 
-        // Ejecutar el código
-        function runCode() {
-            // Guardar en localStorage
-            localStorage.setItem('html', htmlCode.value);
-            localStorage.setItem('css', cssCode.value);
-            localStorage.setItem('js', jsCode.value);
-
-            // Crear documento para el iframe
-            const html = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>${cssCode.value}</style>
-                </head>
-                <body>
-                    ${htmlCode.value}
-                    <script>${jsCode.value}<\/script>
-                </body>
-                </html>
-            `;
-
-            // Mostrar resultado en el iframe
-            preview.srcdoc = html;
-        }
-
-        // Limpiar editores
-        function clearCode() {
-            if(confirm('¿Estás seguro de que quieres limpiar todo el código?')) {
-                htmlCode.value = '';
-                cssCode.value = '';
-                jsCode.value = '';
-                localStorage.removeItem('html');
-                localStorage.removeItem('css');
-                localStorage.removeItem('js');
-                runCode();
-            }
-        }
-
-        // Event listeners
-        runBtn.addEventListener('click', runCode);
-        clearBtn.addEventListener('click', clearCode);
-
-        // Auto-ejecutar al cargar la página
-        window.addEventListener('load', loadCode);
-
-        // Opcional: Auto-ejecutar al dejar de escribir (debounce)
-        let timeout;
-        [htmlCode, cssCode, jsCode].forEach(editor => {
-            editor.addEventListener('input', () => {
-                clearTimeout(timeout);
-                timeout = setTimeout(runCode, 1000);
+        // Inicializar el editor cuando se carga la página
+        document.addEventListener('DOMContentLoaded', () => {
+            window.codeEditor = new CodeEditor();
+            
+            // Escuchar mensajes de error del iframe
+            window.addEventListener('message', (event) => {
+                if (event.data.type === 'error') {
+                    window.codeEditor.showErrorConsole(event.data.message);
+                }
             });
+            
+            // Mensaje de bienvenida
+            console.log('🚀 Editor de Código Avanzado cargado exitosamente!');
+            console.log('💡 Atajos de teclado:');
+            console.log('   • Ctrl+S: Guardar código');
+            console.log('   • Ctrl+Enter: Ejecutar código');
+            console.log('   • Ctrl+1/2/3: Cambiar entre HTML/CSS/JS');
+            console.log('   • F11: Pantalla completa');
+            console.log('   • Escape: Salir de pantalla completa');
+        });
+
+        // Prevenir pérdida de datos al salir
+        window.addEventListener('beforeunload', (e) => {
+            const savedCode = localStorage.getItem('editorCode');
+            if (savedCode && savedCode !== '{}') {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // Manejar errores globales
+        window.addEventListener('error', (e) => {
+            console.error('Error global:', e.error);
+        });
+
+        // Auto-refresh de editores cuando cambia el tamaño de ventana
+        window.addEventListener('resize', () => {
+            if (window.codeEditor) {
+                setTimeout(() => {
+                    Object.keys(window.codeEditor.editors).forEach(lang => {
+                        window.codeEditor.editors[lang].refresh();
+                    });
+                }, 100);
+            }
         });
     </script>
 </body>
