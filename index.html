@@ -755,28 +755,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     const css = this.editors.css.getValue();
                     const js = this.editors.javascript.getValue();
 
-                    const fullCode = `
-                        <!DOCTYPE html>
-                        <html lang="es">
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                            <title>Vista Previa</title>
-                            <style>${css}</style>
-                        </head>
-                        <body>
-                            ${html}
-                            <script>
-                                try {
-                                    ${js}
-                                } catch (error) {
-                                    console.error('Error en JavaScript:', error);
-                                    parent.postMessage({type: 'error', message: error.message}, '*');
-                                }
-                            <\/script>
-                        </body>
-                        </html>
-                    `;
+                    const fullCode = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista Previa</title>
+    <style>${css}</style>
+</head>
+<body>
+    ${html}
+    <script>
+    try {
+        ${js}
+    } catch (error) {
+        console.error('Error en JavaScript:', error);
+        parent.postMessage({type: 'error', message: error.message}, '*');
+    }
+    <\/script>
+</body>
+</html>`;
 
                     document.getElementById('preview').srcdoc = fullCode;
                     document.getElementById('fullscreen-preview').srcdoc = fullCode;
